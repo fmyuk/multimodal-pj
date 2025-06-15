@@ -1,0 +1,12 @@
+PyQt5
+mss
+opencv-python
+pytesseract
+openai
+google-generativeai
+langchain
+voicevox-client
+pyttsx3
+configparser
+requests
+Pillow
