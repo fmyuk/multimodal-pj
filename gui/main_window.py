@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from capture import ScreenCapturer
 from ocr import OCRProcessor
 from ai_client import AIClient
-from tts import TTSManager
+from tts import TTSManager, recognize_speech_from_mic
 from config import load_config
 import threading
 # 追加: macOSウィンドウキャプチャ用
@@ -79,6 +79,11 @@ class MainWindow(QMainWindow):
         self.capture_btn.setCheckable(True)
         self.capture_btn.clicked.connect(self.toggle_capture)
 
+        # 音声認識制御ボタン
+        self.voice_btn = QPushButton("音声入力開始")
+        self.voice_btn.setCheckable(True)
+        self.voice_btn.clicked.connect(self.toggle_voice_input)
+
         # 指示入力欄
         self.input_edit = QLineEdit()
         self.input_edit.setPlaceholderText("指示を入力してください…")
@@ -118,6 +123,7 @@ class MainWindow(QMainWindow):
             vbox.addWidget(QLabel("キャプチャ対象ウィンドウ選択 (macOS):"))
             vbox.addWidget(self.window_combo)
         vbox.addWidget(self.capture_btn)
+        vbox.addWidget(self.voice_btn)
         vbox.addWidget(QLabel("指示入力:"))
         vbox.addWidget(self.input_edit)
         vbox.addWidget(QLabel("AI応答:"))
@@ -205,6 +211,24 @@ class MainWindow(QMainWindow):
 
     def update_ai_result(self, text):
         self.response_edit.append(text)
+
+    def toggle_voice_input(self):
+        if self.voice_btn.isChecked():
+            self.voice_btn.setText("音声入力停止")
+            self._stop_voice_flag = False
+            threading.Thread(target=self.voice_input_loop, daemon=True).start()
+        else:
+            self.voice_btn.setText("音声入力開始")
+            self._stop_voice_flag = True
+
+    def voice_input_loop(self):
+        while not getattr(self, '_stop_voice_flag', False):
+            text = recognize_speech_from_mic()
+            if text:
+                self.input_edit.setText(text)
+                self.handle_user_input()
+            # 1回で止める場合はbreak、連続認識したい場合はループ
+            break
 
     def open_settings(self):
         from gui.settings_dialog import SettingsDialog

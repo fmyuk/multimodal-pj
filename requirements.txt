@@ -10,3 +10,5 @@ pyttsx3
 configparser
 requests
 Pillow
+speechrecognition
+pyaudio

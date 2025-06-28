@@ -4,6 +4,7 @@ import tempfile
 import os
 import sys
 import threading
+import speech_recognition as sr
 
 class TTSManager:
     def __init__(self, engine='os', config=None):
@@ -55,3 +56,22 @@ class TTSManager:
             os.remove(wav_path)
         except Exception as e:
             print(f"[Voicevoxエラー]: {e}", file=sys.stderr)
+
+def recognize_speech_from_mic():
+    """マイクから音声認識してテキストを返す（Google Web Speech API利用）"""
+    recognizer = sr.Recognizer()
+    mic = sr.Microphone()
+    with mic as source:
+        recognizer.adjust_for_ambient_noise(source)
+        print("[音声認識] 開始: 話しかけてください...")
+        audio = recognizer.listen(source, timeout=5, phrase_time_limit=10)
+    try:
+        text = recognizer.recognize_google(audio, language='ja-JP')
+        print(f"[音声認識] 結果: {text}")
+        return text
+    except sr.UnknownValueError:
+        print("[音声認識] 音声が認識できませんでした")
+        return ""
+    except sr.RequestError as e:
+        print(f"[音声認識] サービスエラー: {e}")
+        return ""
